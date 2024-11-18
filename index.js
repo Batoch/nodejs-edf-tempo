@@ -29,4 +29,4 @@ function getday(daytoadd = 0, yeartoadd = 0) {
   return formattedToday;
 }
 
-module.exports = {getdaycolor}
+module.exports = {getdaycolor, getday}
