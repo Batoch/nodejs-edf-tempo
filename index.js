@@ -2,18 +2,28 @@
 fetch = require('node-fetch-commonjs');
 
 async function getdaycolor(day = getday()) {
-  try {
-    var response = await fetch("https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement?option=TEMPO&dateApplicationBorneInf=" + getday(1, -1) + "&dateApplicationBorneSup=" + getday(1));
-    
-    const body = await response.text();
-    const data = JSON.parse(body);
+  var retrycount = 0;
+  while (retrycount < 10) {
+    try {
+      var response = await fetch("https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement?option=TEMPO&dateApplicationBorneInf=" + getday(1, -1) + "&dateApplicationBorneSup=" + getday(1));
+      const data = JSON.parse(await response.text());
 
-    // Find the color of the day from data 
-    return data.content.options[0].calendrier.find(element => element.dateApplication === day).statut
+      if (data.errors[0]) {
+        throw new Error(data.errors[0].description)
+      }
+      // Find the color of the day from data 
+      const daycolor = data.content.options[0].calendrier.find(element => element.dateApplication === day).statut
+      
+      return daycolor
+    }
+    catch (error) {
+      console.error('Error:', error);
+      retrycount++;
+      // wait 10s
+      await new Promise(resolve => setTimeout(resolve, 10000));
+    }
   }
-  catch (error) {
-    console.error('Error:', error);
-  }
+  return "TEMPO_UNKNOW"
 }
 
 
