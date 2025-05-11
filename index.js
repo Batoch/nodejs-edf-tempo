@@ -1,42 +1,38 @@
-// import fetch from 'node-fetch';
-fetch = require('node-fetch-commonjs');
+const fetch = require('node-fetch-commonjs');
+
+function getday(daysToAdd = 0, yearsToAdd = 0) {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() + yearsToAdd);
+  date.setDate(date.getDate() + daysToAdd);
+
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 async function getdaycolor(day = getday()) {
-  var retrycount = 0;
+  let retrycount = 0;
   while (retrycount < 10) {
     try {
-      var response = await fetch("https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement?option=TEMPO&dateApplicationBorneInf=" + getday(1, -1) + "&dateApplicationBorneSup=" + getday(1));
-      const data = JSON.parse(await response.text());
+      const url = `https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement?option=TEMPO&dateApplicationBorneInf=${getday(-1)}&dateApplicationBorneSup=${getday()}`;
+      const response = await fetch(url);
+      const data = await response.json();
 
-      if (data.errors[0]) {
-        throw new Error(data.errors[0].description)
+      if (data.errors?.[0]) {
+        throw new Error(data.errors[0].description);
       }
-      // Find the color of the day from data 
-      const daycolor = data.content.options[0].calendrier.find(element => element.dateApplication === day).statut
-      
-      return daycolor
-    }
-    catch (error) {
-      console.error('Error:', error);
+
+      const daycolor = data.content.options[0].calendrier.find(element => element.dateApplication === day)?.statut;
+      return daycolor || "TEMPO_UNKNOW";
+    } catch (error) {
+      console.error('Error:', error.message);
       retrycount++;
-      // wait 10s
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      await new Promise(resolve => setTimeout(resolve, 10000)); // wait 10s
     }
   }
-  return "TEMPO_UNKNOW"
+  return "TEMPO_UNKNOW";
 }
 
-
-function getday(daytoadd = 0, yeartoadd = 0) {
-  const today = new Date();
-  const yyyy = today.getFullYear() + yeartoadd;
-  let mm = today.getMonth() + 1; // Months start at 0!
-  let dd = today.getDate() + daytoadd;
-  if (dd < 10) dd = '0' + dd;
-  if (mm < 10) mm = '0' + mm;
-  
-  const formattedToday = yyyy + "-" + mm + "-" + dd
-  return formattedToday;
-}
-
-module.exports = {getdaycolor, getday}
+module.exports = { getdaycolor, getday };
