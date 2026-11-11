@@ -1,5 +1,5 @@
 const API_URL = 'https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement';
-const UNKNOWN = 'TEMPO_UNKNOW';
+const UNKNOWN = 'TEMPO_UNKNOWN';
 
 // Tempo days follow the French calendar, whatever the host timezone is.
 const parisDateFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -24,7 +24,13 @@ function getday(daysToAdd = 0, yearsToAdd = 0) {
   return shiftDate(parisDateFormatter.format(new Date()), daysToAdd, yearsToAdd);
 }
 
-async function getdaycolor(day = getday(), { retries = 10, retryDelay = 10000, timeout = 10000 } = {}) {
+/**
+ * Returns the Tempo color of `day` ('TEMPO_BLEU', 'TEMPO_BLANC', 'TEMPO_ROUGE'),
+ * or 'TEMPO_UNKNOWN' if the API does not know this day yet.
+ * Throws if the API could not be reached after `retries` attempts.
+ * `onError(error, attempt)` is called on each failed attempt (e.g. for logging).
+ */
+async function getdaycolor(day = getday(), { retries = 10, retryDelay = 10000, timeout = 10000, onError } = {}) {
   const params = new URLSearchParams({
     option: 'TEMPO',
     dateApplicationBorneInf: shiftDate(day, -1),
@@ -32,6 +38,7 @@ async function getdaycolor(day = getday(), { retries = 10, retryDelay = 10000, t
   });
   const url = `${API_URL}?${params}`;
 
+  let lastError;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(timeout) });
@@ -51,13 +58,14 @@ async function getdaycolor(day = getday(), { retries = 10, retryDelay = 10000, t
 
       return calendrier.find(element => element.dateApplication === day)?.statut || UNKNOWN;
     } catch (error) {
-      console.error(`Error (attempt ${attempt}/${retries}):`, error.message);
+      lastError = error;
+      onError?.(error, attempt);
       if (attempt < retries) {
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }
   }
-  return UNKNOWN;
+  throw new Error(`EDF Tempo API failed after ${retries} attempt(s): ${lastError?.message}`, { cause: lastError });
 }
 
-module.exports = { getdaycolor, getday };
+module.exports = { getdaycolor, getday, UNKNOWN };
