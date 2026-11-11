@@ -1,7 +1,7 @@
 {
   "name": "edf-tempo",
   "version": "1.0.0",
-  "description": "",
+  "description": "Récupère la couleur du jour Tempo (EDF)",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,7 +16,7 @@
     "url": "https://github.com/Batoch/nodejs-edf-tempo/issues"
   },
   "homepage": "https://github.com/Batoch/nodejs-edf-tempo#readme",
-  "dependencies": {
-    "node-fetch-commonjs": "^3.2.4"
+  "engines": {
+    "node": ">=18"
   }
 }
