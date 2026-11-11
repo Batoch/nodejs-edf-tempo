@@ -1,7 +1,7 @@
 {
   "name": "edf-tempo",
   "version": "2.0.0",
-  "description": "Récupère la couleur du jour Tempo (EDF)",
+  "description": "Fetch the EDF Tempo day color",
   "main": "index.js",
   "scripts": {
     "test": "node --test"

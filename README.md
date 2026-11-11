@@ -1,32 +1,32 @@
 # nodejs-edf-tempo
 
-Récupère la couleur d'un jour Tempo (EDF). Nécessite Node.js 18 ou plus (`fetch` natif), sans dépendance.
+Fetches the EDF Tempo color of a given day. Requires Node.js 18 or later (native `fetch`), no dependencies.
 
 ```js
 const { getdaycolor, getday, UNKNOWN } = require('edf-tempo');
 
-await getdaycolor();          // aujourd'hui → 'TEMPO_BLEU' | 'TEMPO_BLANC' | 'TEMPO_ROUGE' | 'TEMPO_UNKNOWN'
-await getdaycolor(getday(1)); // demain ('TEMPO_UNKNOWN' tant qu'EDF ne l'a pas publié)
+await getdaycolor();          // today → 'TEMPO_BLEU' | 'TEMPO_BLANC' | 'TEMPO_ROUGE' | 'TEMPO_UNKNOWN'
+await getdaycolor(getday(1)); // tomorrow ('TEMPO_UNKNOWN' until EDF publishes it)
 
 try {
   await getdaycolor(getday(), {
-    retries: 3,          // nombre de tentatives (défaut 10)
-    retryDelay: 5000,    // attente entre tentatives en ms (défaut 10000)
-    timeout: 10000,      // délai max par requête en ms (défaut 10000)
-    onError: (err, attempt) => console.warn(`Tentative ${attempt} :`, err.message),
+    retries: 3,          // number of attempts (default 10)
+    retryDelay: 5000,    // wait between attempts in ms (default 10000)
+    timeout: 10000,      // max duration per request in ms (default 10000)
+    onError: (err, attempt) => console.warn(`Attempt ${attempt}:`, err.message),
   });
 } catch (err) {
-  // l'API n'a pas répondu après toutes les tentatives (err.cause = dernière erreur)
+  // the API failed after all attempts (err.cause = last error)
 }
 ```
 
-`getday(daysToAdd, yearsToAdd)` renvoie une date `YYYY-MM-DD` selon le fuseau Europe/Paris.
+`getday(daysToAdd, yearsToAdd)` returns a `YYYY-MM-DD` date in the Europe/Paris timezone.
 
-## Changements en 2.0.0 (incompatibles)
+## Breaking changes in 2.0.0
 
-- `TEMPO_UNKNOW` devient `TEMPO_UNKNOWN` (constante exportée : `UNKNOWN`).
-- En cas d'échec de l'API, `getdaycolor` lève une erreur au lieu de renvoyer la valeur inconnue. `TEMPO_UNKNOWN` signifie seulement que le jour n'est pas (encore) dans le calendrier.
-- Plus d'écriture dans la console : utiliser l'option `onError` pour journaliser.
+- `TEMPO_UNKNOW` is renamed to `TEMPO_UNKNOWN` (exported as `UNKNOWN`).
+- When the API fails, `getdaycolor` throws instead of returning the unknown value. `TEMPO_UNKNOWN` now only means the day is not (yet) in the calendar.
+- No more console output: use the `onError` option for logging.
 
 ## Tests
 
