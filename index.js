@@ -1,4 +1,5 @@
-const API_URL = 'https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement';
+// Same endpoint and headers as https://particulier.edf.fr/fr/accueil/gestion-contrat/options/tempo.html
+const API_URL = 'https://api-commerce.edf.fr/commerce-activet/api/v1/calendrier-jours-effacement';
 const UNKNOWN = 'TEMPO_UNKNOWN';
 
 // Tempo days follow the French calendar, whatever the host timezone is.
@@ -35,13 +36,22 @@ async function getdaycolor(day = getday(), { retries = 10, retryDelay = 10000, t
     option: 'TEMPO',
     dateApplicationBorneInf: shiftDate(day, -1),
     dateApplicationBorneSup: day,
+    identifiantConsommateur: 'src',
   });
   const url = `${API_URL}?${params}`;
 
   let lastError;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(timeout) });
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Situation-Usage': 'Jours Effacement',
+          'X-Request-Id': Date.now().toString(),
+          'Application-Origine-Controlee': 'siterc',
+        },
+        signal: AbortSignal.timeout(timeout),
+      });
       const data = await response.json().catch(() => null);
 
       if (data?.errors?.[0]) {

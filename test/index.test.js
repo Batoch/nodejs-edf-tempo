@@ -22,15 +22,22 @@ test('getday returns YYYY-MM-DD and shifts days/years', () => {
 });
 
 test('returns the color of the requested day and queries around it', async () => {
-  const urls = [];
-  global.fetch = async (url) => {
-    urls.push(url);
+  const calls = [];
+  global.fetch = async (url, options) => {
+    calls.push({ url, options });
     return calendar([{ dateApplication: '2026-03-01', statut: 'TEMPO_ROUGE' }]);
   };
   assert.strictEqual(await getdaycolor('2026-03-01'), 'TEMPO_ROUGE');
-  const params = new URL(urls[0]).searchParams;
-  assert.strictEqual(params.get('dateApplicationBorneInf'), '2026-02-28');
-  assert.strictEqual(params.get('dateApplicationBorneSup'), '2026-03-01');
+  const url = new URL(calls[0].url);
+  assert.strictEqual(url.pathname, '/commerce-activet/api/v1/calendrier-jours-effacement');
+  assert.strictEqual(url.searchParams.get('option'), 'TEMPO');
+  assert.strictEqual(url.searchParams.get('dateApplicationBorneInf'), '2026-02-28');
+  assert.strictEqual(url.searchParams.get('dateApplicationBorneSup'), '2026-03-01');
+  assert.strictEqual(url.searchParams.get('identifiantConsommateur'), 'src');
+  const { headers } = calls[0].options;
+  assert.strictEqual(headers['Situation-Usage'], 'Jours Effacement');
+  assert.strictEqual(headers['Application-Origine-Controlee'], 'siterc');
+  assert.match(headers['X-Request-Id'], /^\d+$/);
 });
 
 test('returns UNKNOWN when the day is not in the calendar yet', async () => {
